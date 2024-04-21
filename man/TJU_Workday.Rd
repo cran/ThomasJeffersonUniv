@@ -7,43 +7,47 @@
 TJU_Workday(x, vacations)
 }
 \arguments{
-\item{x}{\link[base]{character} scalar or vector (e.g.,
+\item{x}{\link[base]{character} scalar or \link[base]{vector} (e.g.,
 \code{'2021-01'} for January 2021,
 \code{'2021 Q1'} for 2021 Q1 (January to March)), or
-\link[base]{integer} scalar or vector (e.g., \code{2021L} for year 2021);
+\link[base]{integer} scalar or \link[base]{vector} (e.g., \code{2021L} for year 2021);
 The time-span to be summarized.
 Objects of classes \link[zoo]{yearqtr} and \link[zoo]{yearmon} are also accepted.}
 
-\item{vacations}{\link[base:as.Date]{Date} vector, vacation days}
+\item{vacations}{\link[base]{Date} \link[base]{vector}, vacation days}
 }
 \value{
-\link{TJU_Workday} returns a \link[base]{factor}.
+Function \code{\link[=TJU_Workday]{TJU_Workday()}} returns a \link[base]{factor}.
 }
 \description{
 To summarize the number of workdays, weekends, holidays and vacations in a given time-span
 (e.g., a month or a quarter of a year).
 }
 \details{
-\link{TJU_Workday} summarizes the workdays, weekends,
+Function \code{\link[=TJU_Workday]{TJU_Workday()}} summarizes the workdays, weekends,
 Jefferson paid holidays
 (New Year’s Day, Martin Luther King, Jr. Day, Memorial Day, Fourth of July, Labor Day, Thanksgiving and Christmas)
 and your vacation (e.g., sick, personal, etc.) days (if any),
 in a given time-span.
 
-Per Jefferson policy (source needed), if a holiday is on Saturday, then the preceding Friday is considered Weekend.
-If a holiday is on Sunday, then the following Monday is considered Weekend.
+Per Jefferson policy (source needed),
+if a holiday is on Saturday, then the preceding Friday is considered to be a weekend day.
+If a holiday is on Sunday, then the following Monday is considered to be a weekend day.
 }
 \examples{
 table(TJU_Workday(c('2021-01', '2021-02')))
+
 tryCatch(TJU_Workday(c('2019-10', '2019-12')), error = identity)
-table(TJU_Workday('2022 Q1'))
+table(c(TJU_Workday('2019-10'), TJU_Workday('2019-12'))) # work-around
+
+table(TJU_Workday('2022-12'))
+
 table(TJU_Workday('2022 Q1', vacations = seq.Date(
  from = as.Date('2022-03-14'), to = as.Date('2022-03-18'), by = 1)))
+ 
 table(TJU_Workday('2022 Q2', vacations = as.Date(c(
  '2022-05-22', '2022-05-30', '2022-06-01', '2022-07-04'))))
+ 
 table(TJU_Workday(2021L))
 
-}
-\references{
-\url{https://hr.jefferson.edu/benefits-compensation/paid-time-off.html}
 }
