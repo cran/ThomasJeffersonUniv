@@ -17,14 +17,14 @@ Objects of classes \link[zoo]{yearqtr} and \link[zoo]{yearmon} are also accepted
 \item{vacations}{\link[base]{Date} \link[base]{vector}, vacation days}
 }
 \value{
-Function \code{\link[=TJU_Workday]{TJU_Workday()}} returns a \link[base]{factor}.
+Function \link{TJU_Workday} returns a \link[base]{factor}.
 }
 \description{
 To summarize the number of workdays, weekends, holidays and vacations in a given time-span
 (e.g., a month or a quarter of a year).
 }
 \details{
-Function \code{\link[=TJU_Workday]{TJU_Workday()}} summarizes the workdays, weekends,
+Function \link{TJU_Workday} summarizes the workdays, weekends,
 Jefferson paid holidays
 (New Year’s Day, Martin Luther King, Jr. Day, Memorial Day, Fourth of July, Labor Day, Thanksgiving and Christmas)
 and your vacation (e.g., sick, personal, etc.) days (if any),

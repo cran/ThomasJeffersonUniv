@@ -41,7 +41,7 @@ Downloaded file has name pattern \code{'^Awards_.*\\\\.csv'}}
 'Sponsored Effort'}
 }
 
-Function \code{\link[=aggregateAwards]{aggregateAwards()}} aggregates grant over different period
+Function \link{aggregateAwards} aggregates grant over different period
 (e.g. from Axx-xx-001, Axx-xx-002, Axx-xx-003 to Axx-xx).
 Then we need to manually added in our 'Sponsored Effort' in the returned \code{.csv} file.
 }

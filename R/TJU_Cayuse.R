@@ -26,7 +26,7 @@
 #'   'Sponsored Effort'}
 #' }
 #' 
-#' Function [aggregateAwards()] aggregates grant over different period 
+#' Function [aggregateAwards] aggregates grant over different period 
 #' (e.g. from Axx-xx-001, Axx-xx-002, Axx-xx-003 to Axx-xx).
 #' Then we need to manually added in our 'Sponsored Effort' in the returned `.csv` file.
 #' 
@@ -47,12 +47,11 @@ aggregateAwards <- function(
     fiscal.year = year(Sys.Date())
 ) {
   
-  awards_csv <- list.files(path = path, pattern = '^Awards_.*\\.csv$', full.names = TRUE)
-  nA <- length(awards_csv)
-  if (!nA) stop('Awards file not available')
-  if (nA > 1L) stop('Multiple awards .csv files available')
+  awards_csv_ <- list.files(path = path, pattern = '^Awards_.*\\.csv$', full.names = TRUE)
+  if (!length(awards_csv_)) stop('Awards file not downloaded?')
+  message('\u261e ', style_basename(awards_csv <- sort.int(awards_csv_, decreasing = TRUE)[1L]))
   
-  dim(awards <- read.csv(awards_csv))
+  dim(awards <- read.csv(file = awards_csv, header = TRUE))
   # subset(awards, nzchar(Flags)) # manually inspect
   awards <- within.data.frame(awards, expr = {
     Admin.Unit <- Account.Numbers <- NULL
@@ -67,29 +66,30 @@ aggregateAwards <- function(
   
   length(ys <- split.data.frame(awards, f = ~ Award.No. + Sponsor))
   length(ys <- ys[vapply(ys, FUN = .row_names_info, type = 2L, FUN.VALUE = 0L) > 0L])
-  #length(split.data.frame(Awards1, f = ~ Award.No. + Sponsor, envir = Awards1))
+  rid <- split_int_(data = awards, f = ~ Award.No. + Sponsor)
   
-  y1 <- do.call(rbind.data.frame, args = c(lapply(ys, FUN = function(y) { # (y = ys[[1L]])
-    if (!all(duplicated(y$Project.Title)[-1L])) stop('`Project.Title` not same')
-    first_begin <- min(y$Award.Begin.Date, na.rm = TRUE)
-    last_end <- max(y$Award.End.Date, na.rm = TRUE)
-    Award.Period <- with(y, expr = paste0(
-      Award.Begin.Date, ' ~ ', Award.End.Date, ' (', 
-      format.difftime(asDifftime(Award.End.Date - Award.Begin.Date, units = 'years'), digits = 1L), ', ',
-      '$', formatC(y$Award.Amount, big.mark = ',', format = 'f', digits = 2L),
-      ')', collapse = '\n'
-    ))
-    data.frame(
-      Award.No. = y$Award.No.[1L], 
-      Project.Title = trimws(y$Project.Title[1L]), 
-      Lead.PI = paste(unique(y$Lead.PI), collapse = ', '), 
-      Sponsor = y$Sponsor[1L],
-      Award.Amount = paste0('$', formatC(sum(y$Award.Amount, na.rm = TRUE), big.mark = ',', format = 'f', digits = 2L)),
-      #Award.Notice.Received = min(Award.Notice.Received, na.rm = TRUE),
-      TimePeriod = paste(first_begin, '~', last_end),
-      Award.End.Date = last_end,
-      Award.Period = Award.Period
-    )
+  y1 <- do.call(rbind.data.frame, args = c(lapply(rid, FUN = function(id) { # (id = rid[[1L]])
+    with(data = awards[id, , drop = FALSE], expr = {
+      if (!all(duplicated(Project.Title)[-1L])) stop('`Project.Title` not same')
+      first_begin <- min(Award.Begin.Date, na.rm = TRUE)
+      last_end <- max(Award.End.Date, na.rm = TRUE)
+      Award.Period <- paste0(
+        Award.Begin.Date, ' ~ ', Award.End.Date, ' (', 
+        format.difftime(asDifftime(Award.End.Date - Award.Begin.Date, units = 'years'), digits = 1L), ', ',
+        '$', formatC(Award.Amount, big.mark = ',', format = 'f', digits = 2L),
+        ')', collapse = '\n')
+      data.frame(
+        Award.No. = Award.No.[1L], 
+        Project.Title = trimws(Project.Title[1L]), 
+        Lead.PI = paste(unique(Lead.PI), collapse = ', '), 
+        Sponsor = Sponsor[1L],
+        Award.Amount = paste0('$', formatC(sum(Award.Amount, na.rm = TRUE), big.mark = ',', format = 'f', digits = 2L)),
+        #Award.Notice.Received = min(Award.Notice.Received, na.rm = TRUE),
+        TimePeriod = paste(first_begin, '~', last_end),
+        Award.End.Date = last_end,
+        Award.Period = Award.Period
+      )
+    })
   }), list(make.row.names = FALSE)))
   
   y2 <- within(y1, expr = {
@@ -106,7 +106,7 @@ aggregateAwards <- function(
   write.table(y4, file = aggAwards_csv, sep = ',', row.names = FALSE)
   system(paste('open', aggAwards_csv))
   
-  cat('Fill in `Effort` by clicking into each project under \'Active Projects\'\n')
+  message('\u21ac Fill in `Effort` by clicking into each project under \'Active Projects\'')
   return(invisible(y4))
   
 }
@@ -117,12 +117,12 @@ aggregateAwards <- function(
 #' @rdname TJU_Cayuse
 #' @export
 viewProposal <- function(path = '~/Downloads', fiscal.year = year(Sys.Date())) {
-  proposal_csv <- list.files(path = path, pattern = '^proposals_.*\\.csv$', full.names = TRUE)
-  np <- length(proposal_csv)
-  if (!np) stop('Proposal file not available')
-  if (np > 1L) stop('Multiple proposal files available')
   
-  dim(proposal0 <- read.csv(file = proposal_csv))
+  proposal_csv_ <- list.files(path = path, pattern = '^proposals_.*\\.csv$', full.names = TRUE)
+  if (!length(proposal_csv_)) stop('Proposal file not downloaded?')
+  message('\u261e ', style_basename(proposal_csv <- sort.int(proposal_csv_, decreasing = TRUE)[1L]))
+  
+  dim(proposal0 <- read.csv(file = proposal_csv, header = TRUE))
   
   proposal1 <- within.data.frame(data = proposal0, expr = {
     Prop.No <- trimws(Prop.No)
@@ -135,28 +135,15 @@ viewProposal <- function(path = '~/Downloads', fiscal.year = year(Sys.Date())) {
   # status_rm <- c('Not Funded', 'Funded', 'Abandoned', 'Withdrawn', 'TJU Signing Official')
   status_rm <- c('Funded', 'Abandoned', 'Withdrawn', 'TJU Signing Official')
   dim(proposal <- eval(quote(subset(x = proposal1, subset = !is.na(Submitted_FY) & !(Status %in% status_rm)))))
-  
-  n <- .row_names_info(proposal, type = 2L)
-  
   if (FALSE) { #manually inspect
     freqs(proposal$Submitted.Date)
     freqs(proposal$Status)
     length(unique(proposal$Lead.PI))
   }
   
-  #################################
   # copy to Interfolio
-  
-  .mapply(FUN = function(x, nm) {
-    cat(c('Proposal', sQuote(nm)), '\n')
-    cat_named(x)
-  }, dots = list(
-    x = split.data.frame(proposal[c('Submitted_Term', 'Project.Name', 'Sponsor', 'Prop.No', 'My.Role', 'Lead.PI', 'Status')], f = seq_len(n)), 
-    nm = seq_len(n)
-  ), MoreArgs = NULL)
-  
+  view_by_row(proposal[c('Submitted_Term', 'Project.Name', 'Sponsor', 'Prop.No', 'My.Role', 'Lead.PI', 'Status')])
   return(invisible(proposal))
-  
 }
 
 
@@ -165,29 +152,10 @@ viewProposal <- function(path = '~/Downloads', fiscal.year = year(Sys.Date())) {
 #' @rdname TJU_Cayuse
 #' @export
 viewAward <- function(path = '~/Downloads') {
-  
   awards <- read.csv(file = file.path(path, 'aggregatedAwards.csv'))
-  n <- .row_names_info(awards, type = 2L)
-  #awards <- within(awards0, expr = {
-  #  Award.No. <- paste0(Award.No., '; ', Lead.PI)
-  #  Lead.PI <- Award.Amount <- TimePeriod <- NULL
-  #})
-  
-  #################################
   # copy to Interfolio
-  
-  .mapply(FUN = function(x, nm) {
-    message(c('Award ', sQuote(nm)))
-    cat_named(x)
-  }, dots = list(
-    x = split.data.frame(awards[c(
-      'Award.No.', 'Project.Title', 'Lead.PI', 'Sponsor', 'Award.Period', 'Status', 'Effort'
-    )], f = seq_len(n)), 
-    nm = seq_len(n)
-  ), MoreArgs = NULL)
-  
+  view_by_row(awards[c('Award.No.', 'Project.Title', 'Lead.PI', 'Sponsor', 'Award.Period', 'Status', 'Effort')])
   return(invisible())
-  
 }
 
 
@@ -221,6 +189,19 @@ if (FALSE) {
 
 
 
+
+view_by_row <- function(data) {
+  nr <- .row_names_info(data, type = 2L)
+  .mapply(FUN = function(x, nm) {
+    message('Row ', sQuote(nm))
+    cat(format_named(x), sep = '\n')
+    cat('\n')
+  }, dots = list(
+    x = split.data.frame(data, f = seq_len(nr)), 
+    nm = seq_len(nr)
+  ), MoreArgs = NULL)
+  return(invisible())
+}
 
 
 

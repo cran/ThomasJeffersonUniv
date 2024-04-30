@@ -2,7 +2,7 @@
 % Please edit documentation in R/checkCount.R
 \name{checkCount}
 \alias{checkCount}
-\title{checkCount}
+\title{Positive Counts in a \link[base]{logical} vector}
 \usage{
 checkCount(x)
 }
@@ -13,5 +13,8 @@ checkCount(x)
 Function \link{checkCount} returns a \link[base]{character} scalar.
 }
 \description{
-..
+Number and percentage of positive counts in a \link[base]{logical} \link[base]{vector}.
+}
+\examples{
+checkCount(as.logical(infert$case))
 }

@@ -2,16 +2,30 @@
 % Please edit documentation in R/checkDuplicated.R
 \name{checkDuplicated}
 \alias{checkDuplicated}
-\title{checkDuplicated}
+\title{Inspect Duplicated Records in a \link[base]{data.frame}}
 \usage{
-checkDuplicated(data, f, file_duplicated = tempfile(fileext = ".txt"), ...)
+checkDuplicated(
+  data,
+  f,
+  dontshow = character(length = 0L),
+  file = tempfile(pattern = "checkDuplicated_", fileext = ".xlsx"),
+  ...
+)
 }
 \arguments{
 \item{data}{\link[base]{data.frame}}
 
-\item{f}{\link[stats]{formula}}
+\item{f}{\link[stats]{formula},
+criteria of duplication, e.g.,
+use \code{~ mrn} to identify duplicated \code{mrn}, or
+use \code{~ mrn + visitdt} to identify duplicated \code{mrn:visitdt}}
 
-\item{file_duplicated}{\link[base]{character} scalar}
+\item{dontshow}{(optional) \link[base]{character} scalar or \link[base]{vector},
+variable names to be omitted in output diagnosis \code{file}}
+
+\item{file}{\link[base]{character} scalar,
+path of diagnosis file,
+print out of substantial duplicates}
 
 \item{...}{additional parameters, currently not in use}
 }
@@ -19,7 +33,7 @@ checkDuplicated(data, f, file_duplicated = tempfile(fileext = ".txt"), ...)
 Function \link{checkDuplicated} returns a \link[base]{data.frame}.
 }
 \description{
-..
+To inspect duplicated records in a \link[base]{data.frame}.
 }
 \examples{
 (d1 = data.frame(A = c(1, 1), B = c(NA_character_, 'text')))

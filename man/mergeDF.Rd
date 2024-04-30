@@ -4,18 +4,27 @@
 \alias{mergeDF}
 \title{An Alternative Merge Operation}
 \usage{
-mergeDF(e1, e2, by = character(), by1 = character(), by2 = character())
+mergeDF(
+  x,
+  table,
+  by = character(),
+  by.x = character(),
+  by.table = character(),
+  ...
+)
 }
 \arguments{
-\item{e1}{\link[base]{data.frame}, on which new columns will be added.
-All rows of \code{e1} will be retained in the returned object, \emph{in their original order}.}
+\item{x}{\link[base]{data.frame}, on which new columns will be added.
+All rows of \code{x} will be retained in the returned object, \emph{in their original order}.}
 
-\item{e2}{\link[base]{data.frame}, columns of which will be added to \code{e1}.
-Not all rows of \code{e2} will be included in the returned object}
+\item{table}{\link[base]{data.frame}, columns of which will be added to \code{x}.
+Not all rows of \code{table} will be included in the returned object}
 
 \item{by}{\link[base]{character} scalar or \link[base]{vector}}
 
-\item{by1, by2}{\link[base]{character} scalar or \link[base]{vector}}
+\item{by.x, by.table}{\link[base]{character} scalar or \link[base]{vector}}
+
+\item{...}{additional parameters of \link{matchDF}}
 }
 \value{
 Function \link{mergeDF} returns a \link[base]{data.frame}.
@@ -48,7 +57,7 @@ even \code{sort = FALSE} may not completely retain the original order of input \
   NA, 'Ripley', NA, NA, NA, NA, 'Venables & Smith',
   'Heagerty & Liang & Scott Zeger')))
 
-(m = mergeDF(books, authors, by1 = 'name', by2 = 'surname'))
+(m = mergeDF(books, authors, by.x = 'name', by.table = 'surname'))
 attr(m, 'nomatch')
 
 }

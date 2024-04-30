@@ -21,7 +21,10 @@ Function \link{phone10} returns a \link[base]{character} \link[base]{vector} of 
 Function \link{phone10} converts all US and Canada (+1) phone numbers to 10-digit.
 }
 \examples{
-x = c('+16108885188', '15108581787', '8588889426')
+x = c(
+ '+1(800)275-2273', # Apple
+ '1-888-280-4331' # Amazon
+)
 phone10(x)
 phone10(x, sep = '-')
 

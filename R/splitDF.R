@@ -31,7 +31,7 @@ splitDF <- function(x) {
 
 
 
-#' @title Match Rows of \link[base]{data.frame}s
+#' @title Match Rows of One \link[base]{data.frame} to Another
 #' 
 #' @description
 #' To \link[base]{match} the rows of one \link[base]{data.frame}
@@ -45,18 +45,32 @@ splitDF <- function(x) {
 #' 
 #' @param by.x,by.table \link[base]{character} scalar or \link[base]{vector}
 #' 
+#' @param view.table (optional) \link[base]{character} scalar or \link[base]{vector},
+#' variable names of `table` to be printed in fuzzy suggestion (if applicable)
+#'  
+#' @param trace \link[base]{logical} scalar, to provide detailed diagnosis information, default `FALSE`
+#' 
+#' @param ... additional parameters, currently not in use
+#' 
 #' @returns 
 #' Function [matchDF] returns a \link[base]{integer} \link[base]{vector}
 #' 
+#' @note
+#' Unfortunately, R does not provide case-insensitive \link[base]{match}.
+#' Only case-insensitive \link[base]{grep} methods are available.
 #' 
 #' @examples
-#' DF <- swiss[sample(nrow(swiss), size = 100, replace = TRUE), ]
+#' DF = swiss[sample(nrow(swiss), size = 100, replace = TRUE), ]
 #' matchDF(DF)
-#' 
+#' @importFrom stringdist stringdist
+#' @importFrom utils write.csv
 #' @export
 matchDF <- function(
     x, table = unique.data.frame(x),
-    by = names(x), by.x = character(), by.table = character()
+    by = names(x), by.x = character(), by.table = character(),
+    view.table = character(),
+    trace = FALSE,
+    ...
 ) {
   
   if (!is.data.frame(x)) stop('`x` must be data.frame')
@@ -75,9 +89,9 @@ matchDF <- function(
   nby <- length(by.x)
   if (nby != length(by.tab)) stop('`by.x` and `by.table` must be same length')
   
-  nm_x <- setdiff(nm.x, by.x)
-  nm_table <- setdiff(nm.tab, by.tab)
-  if (length(nm_ <- intersect(nm_x, nm_table))) stop('do not allow same colnames ', paste(sQuote(nm_), collapse = ','), ' in `x` and `table` (except for `by`)')
+  #nm_x <- setdiff(nm.x, by.x)
+  #nm_table <- setdiff(nm.tab, by.tab)
+  #if (length(nm_ <- intersect(nm_x, nm_table))) stop('do not allow same colnames ', paste(sQuote(nm_), collapse = ','), ' in `x` and `table` (except for `by`)')
   
   x0 <- x[by.x]; .rowNamesDF(x0) <- NULL
   tab0 <- tab[by.tab]; names(tab0) <- by.x; .rowNamesDF(tab0) <- NULL
@@ -87,24 +101,58 @@ matchDF <- function(
   id <- match(x = splitDF(x0), table = splitDF(tab0), nomatch = NA_integer_)
   
   if (any(na1 <- is.na(id))) {
+    
     x_ <- x0[na1, , drop = FALSE]
     x_uid <- !duplicated.data.frame(x_)
+    
     x_u <- x_[x_uid, , drop = FALSE]
     
-    message('\u2756 ', sum(na1), ' (', sum(x_uid), ' unique) rows (', paste(by.x, collapse = ','), 
-            ') has no match (', paste(by.tab, collapse = ','), ')')
-    
-    for (i in rev.default(seq_len(nby - 1L))) { # (i = nby - 1L)
+    for (i in c(rev.default(seq_len(nby - 1L)), 0L)) { # (i = nby - 1L)
+      if (i == 0L) break # to indicate nothing full-match
       iseq <- seq_len(i)
       idx <- match(x = splitDF(unique.data.frame(x_u[iseq])), 
                    table = splitDF(unique.data.frame(tab0[iseq])), 
                    nomatch = NA_integer_)
       idok <- !is.na(idx)
-      message('\u2756 Matched ', sum(idok), '/', length(idx), ' by ', 
-              sQuote(paste(by.x[iseq], collapse = ',')), ' and ',
-              sQuote(paste(by.tab[iseq], collapse = ',')))
+      if (trace) message(sprintf(fmt = '\u2756 Matched %d/%d by %s and %s', sum(idok), length(idx), style_interaction(by.x[iseq]), style_interaction(by.tab[iseq])))
       if (all(idok)) break
     }
+    
+    if (i == 0L) {
+      x_dx <- x_u
+      tab_dx <- tab0
+    } else {
+      x_dx <- x_u[, -seq_len(i), drop = FALSE]
+      tab_dx <- tab0[, -seq_len(i), drop = FALSE]
+    }
+    
+    min_dist_0 <- lapply(seq_len(length(x_dx)), FUN = function(i) { # (i = 1L)
+      tmp <- lapply(x_dx[[i]], FUN = stringdist, b = tab_dx[[i]], method = 'lcs')
+      vapply(tmp, FUN = which.min, FUN.VALUE = 0L, USE.NAMES = FALSE)
+    })
+    min_dist_1 <- .mapply(FUN = c, dots = min_dist_0, MoreArgs = NULL)
+    min_dist <- lapply(min_dist_1, FUN = unique.default)
+    
+    view_table <- if (length(view.table)) tab[view.table] else tab
+    fuzzy_suggest <- data.frame(
+      x_dx[rep(seq_along(min_dist), times = lengths(min_dist)), , drop = FALSE],
+      view_table[unlist(min_dist, use.names = FALSE), , drop = FALSE]
+    )
+    fuzzy_csv <- tempfile(pattern = 'fuzzy_', fileext = '.csv')
+    message(sprintf(
+      fmt = '\u261e %s for %d (%d unique) %s having no exact match to %s\n', # extra line feed!!
+      style_basename(fuzzy_csv),
+      sum(na1), sum(x_uid), 
+      style_interaction(by.x), style_interaction(by.tab)))
+    write.csv(x = fuzzy_suggest, file = fuzzy_csv, row.names = FALSE)
+    system(paste0('open ', dirname(fuzzy_csv)))
+    
+    id_agree <- (lengths(min_dist, use.names = FALSE) == 1L)
+    if (any(id_agree)) {  
+      #stop('Create REDCap file for Ayako')
+      # think what to do next
+    }
+    
   }
   
   attr(id, which = 'by.x') <- by.x
@@ -118,25 +166,22 @@ matchDF <- function(
 
 
 
-
-
-
-
-
 #' @title An Alternative Merge Operation
 #' 
 #' @description
 #' ..
 #' 
-#' @param e1 \link[base]{data.frame}, on which new columns will be added.
-#' All rows of `e1` will be retained in the returned object, *in their original order*.
+#' @param x \link[base]{data.frame}, on which new columns will be added.
+#' All rows of `x` will be retained in the returned object, *in their original order*.
 #' 
-#' @param e2 \link[base]{data.frame}, columns of which will be added to `e1`.
-#' Not all rows of `e2` will be included in the returned object
+#' @param table \link[base]{data.frame}, columns of which will be added to `x`.
+#' Not all rows of `table` will be included in the returned object
 #' 
 #' @param by \link[base]{character} scalar or \link[base]{vector}
 #' 
-#' @param by1,by2 \link[base]{character} scalar or \link[base]{vector}
+#' @param by.x,by.table \link[base]{character} scalar or \link[base]{vector}
+#' 
+#' @param ... additional parameters of [matchDF]
 #' 
 #' @note
 #' We avoid \link[base]{merge.data.frame} as much as possible,
@@ -166,29 +211,28 @@ matchDF <- function(
 #'   NA, 'Ripley', NA, NA, NA, NA, 'Venables & Smith',
 #'   'Heagerty & Liang & Scott Zeger')))
 #' 
-#' (m = mergeDF(books, authors, by1 = 'name', by2 = 'surname'))
+#' (m = mergeDF(books, authors, by.x = 'name', by.table = 'surname'))
 #' attr(m, 'nomatch')
 #' 
 #' @export
 mergeDF <- function(
-    e1, e2, 
-    by = character(), by1 = character(), by2 = character()
+    x, table, 
+    by = character(), by.x = character(), by.table = character(),
+    ...
 ) {
   
-  id <- matchDF(x = e1, table = e2, by = by, by.x = by1, by.table = by2)
+  id <- matchDF(x = x, table = table, by = by, by.x = by.x, by.table = by.table, ...)
+  by.x <- attr(id, which = 'by.x', exact = TRUE)
+  by.table <- attr(id, which = 'by.table', exact = TRUE)
   
-  data_nomatch <- if (anyNA(id)) {
-    tmp <- e1[is.na(id), , drop = FALSE]
-    by1 <- attr(id, which = 'by.x', exact = TRUE)
-    tmp_uid <- !duplicated.data.frame(tmp[by1])
-    tmp_u <- tmp[tmp_uid, , drop = FALSE]
-    tmp_u[do.call(order, args = as.list.data.frame(tmp_u[by1])), , drop = FALSE]
-  } # else NULL
+  nm_table <- setdiff(names(table), by.table)
+  if (length(nm_ <- intersect(
+    x = setdiff(names(x), by.x), 
+    y = nm_table
+  ))) stop('do not allow same colnames ', style_interaction(nm_), ' in `x` and `table` (except for `by`)')
   
-  by2 <- attr(id, which = 'by.table', exact = TRUE)
-  ret <- data.frame(e1, e2[id, setdiff(names(e2), by2), drop = FALSE])
-  rownames(ret) <- rownames(e1) # otherwise be overriden by rownames(e2[...])
-  attr(ret, which = 'nomatch') <- data_nomatch
+  ret <- data.frame(x, table[id, nm_table, drop = FALSE])
+  rownames(ret) <- rownames(x) # otherwise be overriden by rownames(table[...])
   return(ret)
   
 }

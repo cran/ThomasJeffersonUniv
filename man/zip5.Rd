@@ -18,3 +18,6 @@ Function \link{zip5} returns a \link[base]{character} \link[base]{vector} of \li
 \details{
 Function \link{zip5} converts all US zip codes to 5-digit.
 }
+\examples{
+zip5(c('14901', '41452-1423'))
+}

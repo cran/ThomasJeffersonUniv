@@ -10,7 +10,7 @@ TJU_Fiscal_Year(x)
 \item{x}{\link[base]{integer} scalar}
 }
 \value{
-Function \code{\link[=TJU_Fiscal_Year]{TJU_Fiscal_Year()}} returns a length-two \link[base]{Date} \link[base]{vector},
+Function \link{TJU_Fiscal_Year} returns a length-two \link[base]{Date} \link[base]{vector},
 indicating the start (July 1 of the previous calendar year) and end date (June 30) of a fiscal year.
 }
 \description{

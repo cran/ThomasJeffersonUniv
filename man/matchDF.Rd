@@ -2,14 +2,17 @@
 % Please edit documentation in R/splitDF.R
 \name{matchDF}
 \alias{matchDF}
-\title{Match Rows of \link[base]{data.frame}s}
+\title{Match Rows of One \link[base]{data.frame} to Another}
 \usage{
 matchDF(
   x,
   table = unique.data.frame(x),
   by = names(x),
   by.x = character(),
-  by.table = character()
+  by.table = character(),
+  view.table = character(),
+  trace = FALSE,
+  ...
 )
 }
 \arguments{
@@ -20,6 +23,13 @@ matchDF(
 \item{by}{\link[base]{character} scalar or \link[base]{vector}}
 
 \item{by.x, by.table}{\link[base]{character} scalar or \link[base]{vector}}
+
+\item{view.table}{(optional) \link[base]{character} scalar or \link[base]{vector},
+variable names of \code{table} to be printed in fuzzy suggestion (if applicable)}
+
+\item{trace}{\link[base]{logical} scalar, to provide detailed diagnosis information, default \code{FALSE}}
+
+\item{...}{additional parameters, currently not in use}
 }
 \value{
 Function \link{matchDF} returns a \link[base]{integer} \link[base]{vector}
@@ -28,8 +38,11 @@ Function \link{matchDF} returns a \link[base]{integer} \link[base]{vector}
 To \link[base]{match} the rows of one \link[base]{data.frame}
 to the rows of another \link[base]{data.frame}.
 }
+\note{
+Unfortunately, R does not provide case-insensitive \link[base]{match}.
+Only case-insensitive \link[base]{grep} methods are available.
+}
 \examples{
-DF <- swiss[sample(nrow(swiss), size = 100, replace = TRUE), ]
+DF = swiss[sample(nrow(swiss), size = 100, replace = TRUE), ]
 matchDF(DF)
-
 }

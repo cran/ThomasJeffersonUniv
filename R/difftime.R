@@ -1,16 +1,20 @@
 
 
-#' @title Additional Time Units
+#' @title Additional Time Units `'months'` and `'years'`
 #' 
 #' @description
-#' Additional time units for \link[base]{difftime} object.
+#' To support additional time units `'months'` and `'years'` for \link[base]{difftime} object.
 #' 
 #' @details
-#' To support additional time units `'months'` and `'years'`.
+#' Every 4 years has `1461(=365*4+1)` days, or `48(=4*12)` months.
+#' Therefore, every month has `30.44(=1461/48)` days, or `4.35(=1461/48/7)` weeks.
+#' 
+#' Every year has 12 months.
+#' 
 #' 
 #' @note
-#' Functions \link[base]{as.difftime} and \link[base]{units<-.difftime} 
-#' only support 
+#' Function \link[base]{units<-.difftime} 
+#' only supports 
 #' `'secs'`, `'mins'`, `'hours'`, `'days'`, `'weeks'`.
 #' 
 #' @returns
@@ -18,7 +22,11 @@
 #' 
 #' @keywords internal
 #' @export
-timeUnits <- function() c(secs = 1, mins = 60, hours = 60, days = 24, weeks = 7, months = 30/7, years = 365/30)
+timeUnits <- function() c(
+  secs = 1, mins = 60, hours = 60, days = 24, weeks = 7, 
+  months = 1461/48/7, 
+  years = 12
+)
 
 
 
@@ -27,7 +35,7 @@ timeUnits <- function() c(secs = 1, mins = 60, hours = 60, days = 24, weeks = 7,
 #' 
 #' @description
 #' To create \link[base]{difftime} object 
-#' ?with additional time units `'months'` and `'years'`.
+#' with additional time units `'months'` and `'years'`.
 #' 
 #' @param tim \link[base]{numeric} or \link[base]{difftime} object, 
 #' similar usage as in function \link[base]{as.difftime}
@@ -37,8 +45,8 @@ timeUnits <- function() c(secs = 1, mins = 60, hours = 60, days = 24, weeks = 7,
 #' but with additional options `'months'` and `'years'`
 #' 
 #' @param negative_do exception handling 
-#' if input `tim` contains negative element(s). 
-#' Default is an error \link[base]{stop}
+#' if input `tim` has negative element(s). 
+#' Default is to \link[base]{stop}
 #' 
 #' @param ... additional parameters, currently not in use
 #' 
@@ -47,13 +55,13 @@ timeUnits <- function() c(secs = 1, mins = 60, hours = 60, days = 24, weeks = 7,
 #' Function [asDifftime] improves function \link[base]{as.difftime} in terms that
 #' \itemize{
 #' \item {If input `tim` is a \link[base]{difftime} object, 
-#' function [units_difftime<-] is called and the unit of `tim` is changed.
-#' In function \link[base]{as.difftime}, `tim` is returned directly, i.e., `units` is ignored}
-#' \item {Additional time units `'months'` and `'years'` are supported, 
+#' function [units_difftime<-] is called and the unit of `tim` is updated.
+#' In function \link[base]{as.difftime}, `tim` is returned directly, i.e., parameter `units` is ignored}
+#' \item {Time units `'months'` and `'years'` are supported, 
 #' in addition to `'secs'`, `'mins'`, `'hours'`, `'days'`, `'weeks'` supported in function \link[base]{as.difftime}.
-#' Moreover, partial matching (i.e., function \link[base]{match.arg}) is called,
+#' Moreover, partial matching (via function \link[base]{match.arg}) is allowed,
 #' while function \link[base]{as.difftime} requires exact matching.}
-#' \item {End user may choose to \link[base]{stop} if `tim` contains negative values.
+#' \item {End user may choose to \link[base]{stop} if `tim` has negative values.
 #' Function \link[base]{as.difftime} does not check for negative `tim`.}
 #' }
 #' 
@@ -61,7 +69,7 @@ timeUnits <- function() c(secs = 1, mins = 60, hours = 60, days = 24, weeks = 7,
 #' Function [asDifftime] returns a \link[base]{difftime} object.
 #' 
 #' @note 
-#' Potential name clash \link[units]{as_difftime}
+#' Potential name clash with function \link[units]{as_difftime}
 #' 
 #' @export
 asDifftime <- function(

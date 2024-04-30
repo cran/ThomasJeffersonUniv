@@ -17,7 +17,7 @@
 #' 
 #' @details 
 #' 
-#' Function [TJU_Workday()] summarizes the workdays, weekends,
+#' Function [TJU_Workday] summarizes the workdays, weekends,
 #' Jefferson paid holidays 
 #' (New Year’s Day, Martin Luther King, Jr. Day, Memorial Day, Fourth of July, Labor Day, Thanksgiving and Christmas)
 #' and your vacation (e.g., sick, personal, etc.) days (if any),
@@ -28,7 +28,7 @@
 #' If a holiday is on Sunday, then the following Monday is considered to be a weekend day.
 #' 
 #' @returns 
-#' Function [TJU_Workday()] returns a \link[base]{factor}.
+#' Function [TJU_Workday] returns a \link[base]{factor}.
 #' 
 #' @examples
 #' table(TJU_Workday(c('2021-01', '2021-02')))

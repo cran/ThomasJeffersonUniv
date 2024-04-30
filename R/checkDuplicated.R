@@ -1,16 +1,23 @@
 
 
-#' @title checkDuplicated
+#' @title Inspect Duplicated Records in a \link[base]{data.frame}
 #' 
 #' @description
-#' ..
-#' 
+#' To inspect duplicated records in a \link[base]{data.frame}.
 #' 
 #' @param data \link[base]{data.frame}
 #' 
-#' @param f \link[stats]{formula}
+#' @param f \link[stats]{formula},
+#' criteria of duplication, e.g., 
+#' use `~ mrn` to identify duplicated `mrn`, or 
+#' use `~ mrn + visitdt` to identify duplicated `mrn:visitdt`
+#'
+#' @param dontshow (optional) \link[base]{character} scalar or \link[base]{vector},
+#' variable names to be omitted in output diagnosis `file`
 #' 
-#' @param file_duplicated \link[base]{character} scalar
+#' @param file \link[base]{character} scalar,
+#' path of diagnosis file, 
+#' print out of substantial duplicates
 #' 
 #' @param ... additional parameters, currently not in use
 #' 
@@ -23,74 +30,78 @@
 #' 
 #' (d2 = data.frame(A = c(1, 2), B = c(NA_character_, 'text')))
 #' 
-#' @importFrom stats model.frame.default
+#' @importFrom writexl write_xlsx
 #' @export
 checkDuplicated <- function(
-    data, f,
-    file_duplicated = tempfile(fileext = '.txt'),
+    data, f, 
+    dontshow = character(length = 0L),
+    file = tempfile(pattern = 'checkDuplicated_', fileext = '.xlsx'),
     ...
 ) {
   
-  dup_txt <- sQuote(deparse1(f))
+  dup_txt <- style_interaction(f)
   
-  d0 <- model.frame.default(formula = f, data = data)
-  f0 <- do.call(what = interaction, args = as.list.data.frame(d0))
-  if (nlevels(f0) == length(f0)) {
+  rid <- split_int_(data = data, f = f)
+  rid_n <- lengths(rid, use.names = FALSE)
+  
+  rid_n1 <- (rid_n == 1L)
+  if (all(rid_n1)) {
     message(sprintf(fmt = '\u2714 No duplicated %s\n', dup_txt))
     return(invisible(data))
   }
   
-  #ds <- split.data.frame(x = data, f = f) # too slow with big `data`
-  f_ <- .formula2varlist(formula = f, data = data)
-  rid <- split(x = seq_len(nrow(data)), f = f_) # split row-indices
-  rid_n <- lengths(rid, use.names = FALSE)
-  
   # rows of `data` without duplication
-  r0 <- sort.int(unlist(rid[rid_n == 1L], use.names = FALSE))
+  r0 <- sort.int(unlist(rid[rid_n1], use.names = FALSE))
   
   rid_dup <- rid[rid_n > 1L]
   nm_dup <- format(sQuote(names(rid_dup)), justify = 'left')
+  
+  # slow with big `data`!!
   ds_dup <- mapply(FUN = function(i, nm) {
     message('\rCreating subset ', nm, appendLF = FALSE)
     data[i, , drop = FALSE]
   }, i = rid_dup, nm = sprintf(fmt = '%s - %d of %d', nm_dup, seq_along(nm_dup), length(nm_dup)), SIMPLIFY = FALSE)
+  cat('\r')
   
   ds_coalesce <- lapply(ds_dup, FUN = function(d) {
-    # can `d` be colume-wise coalesced ?
-    tryCatch(expr = as.data.frame.list(
-      x = lapply(d, FUN = unique_), 
-      check.names = FALSE
-    ), error = identity)
+    # attempt column-wise coalesce?
+    tryCatch(expr = lapply(d, FUN = unique_), error = identity)
   })
   
   id_truedup <- vapply(ds_coalesce, FUN = inherits, what = 'error', FUN.VALUE = NA)
   
-  if (any(id_truedup)) {
+  d_coalesce <- if (any(!id_truedup)) {
+    message(sprintf(fmt = '\u2756 %d %s with trivial (i.e., coalesce-able) duplicates', sum(!id_truedup), dup_txt))
+    as.data.frame.list(
+      x = do.call(what = mapply, args = c(
+        ds_coalesce[!id_truedup], 
+        list(FUN = c, SIMPLIFY = FALSE))),
+      check.names = FALSE)
+  }# else NULL
+  
+  r1_truedup <- if (any(id_truedup)) {
+    n_truedup <- sum(id_truedup)
     
-    rid_truedup <- rid_dup[id_truedup]
-    nm_truedup <- nm_dup[id_truedup]
-    ds_truedup <- ds_dup[id_truedup]
+    dontshow_nc <- match(dontshow, table = names(data))
+    show_nc <- -dontshow_nc[!is.na(dontshow_nc)]
+    if (!length(show_nc)) show_nc <- TRUE
+    
+    # slow with big `data`!!
     tmp <- mapply(FUN = function(d, nm) {
       message('\rFinding duplicated columns ', nm, appendLF = FALSE)
-      not_unique_(d)
-    }, d = ds_truedup, nm = sprintf(fmt = '%s - %d of %d', nm_truedup, seq_along(nm_truedup), length(nm_truedup)), SIMPLIFY = FALSE)
-    sink(file = file_duplicated)
-    print(tmp)
-    sink()
-    message(sprintf(fmt = '\r\u261e %s: %d %s with substantial duplicates', sQuote(basename(file_duplicated)), length(rid_truedup), dup_txt))
-    system(paste0('open ', dirname(file_duplicated)))
+      not_unique_(d[show_nc])
+    }, d = ds_dup[id_truedup], nm = sprintf(fmt = '%s - %d of %d', nm_dup[id_truedup], seq_len(n_truedup), n_truedup), SIMPLIFY = FALSE)
+    cat('\r')
     
-    # quite slow!!
-    d_dup_row1 <- do.call(rbind.data.frame, args = c(lapply(ds_truedup, FUN = function(x) x[1L, , drop = FALSE]), list(make.row.names = FALSE)))
+    write_xlsx(x = tmp, path = file)
+    message(sprintf(fmt = '\u261e %s %d %s with substantial duplicates', style_basename(file), n_truedup, dup_txt))
+    system(paste0('open ', dirname(file)))
     
-  } else d_dup_row1 <- NULL
+    vapply(rid_dup[id_truedup], FUN = `[`, 1L, FUN.VALUE = NA_integer_)
+  } # else NULL
   
-  ret <- rbind.data.frame(
-    data[r0, , drop = FALSE],
-    if (any(!id_truedup)) do.call(what = rbind.data.frame, args = c(ds_coalesce[!id_truedup], list(make.row.names = FALSE))),
-    d_dup_row1
-  )
-  message(sprintf('\u21ac %d rows: duplicated (substantial or trivial) %s removed\n', nrow(ret), dup_txt))
+  ret <- rbind.data.frame(data[c(r0, r1_truedup), , drop = FALSE], d_coalesce)
+  message(sprintf('\u21ac %s after %s duplicates removed\n', style_samplesize(nrow(ret)), dup_txt))
   return(ret)
   
 }
