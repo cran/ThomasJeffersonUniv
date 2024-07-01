@@ -43,6 +43,6 @@ Unfortunately, R does not provide case-insensitive \link[base]{match}.
 Only case-insensitive \link[base]{grep} methods are available.
 }
 \examples{
-DF = swiss[sample(nrow(swiss), size = 100, replace = TRUE), ]
+DF = swiss[sample(nrow(swiss), size = 55, replace = TRUE), ]
 matchDF(DF)
 }

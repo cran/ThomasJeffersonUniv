@@ -38,10 +38,19 @@ style_basename <- function(x) {
   
   # @importFrom cli cli_text
   #cli_text(sprintf(fmt = '\u261e {.href [%s](file://%s)}', basename(x), normalizePath(x)))
-  # as of 2024-04, RStudio cannot open an existing file correctly
-  # .. RStudio will warn of a non-exisiting file, though
+  # as of 2024-04, an existing file can be opened **inside RStudio**
+  # .. RStudio will warn of a non-existing file
   # also, I don't know how to base::message cli::cli_text
 }
+
+# if (FALSE) {
+# style_basename_FUTURE('~/Desktop/a.pdf')
+# style_basename_FUTURE('~/Desktop/b.pdf')
+# }
+#style_basename_FUTURE <- function(x) {
+#  cli::cli_text(sprintf(fmt = '\u261e {.href [%s](file://%s)}', basename(x), normalizePath(x)))
+#}
+
 
 
 #' @title Highlight Style for (\link[base]{interaction} of) \link[base]{factor}s

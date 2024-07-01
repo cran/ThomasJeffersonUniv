@@ -38,6 +38,10 @@ Surv_3Date <- function(
   stop_nm <- deparse1(substitute(stop))
   censor_nm <- deparse1(substitute(censor))
   
+  start <- as.Date(start)
+  stop <- as.Date(stop)
+  censor <- as.Date(censor)
+  
   stop2 <- stop - start # recycled; may have NA
   if (any(unclass(stop2) < 0, na.rm = TRUE)) {
     message('`start` date later than `stop` date\nsee `subset_(, subset = ', start_nm, ' > ', stop_nm, ')`')
@@ -70,7 +74,7 @@ survOver <- function(object, over, ...) {
   if (!inherits(object, 'Surv') || ncol(object) != 2L) stop('`object` must be right censored')
   if (!is.numeric(over) || length(over) != 1L || is.na(over)) stop('`over` must be len-1 numeric')
   
-  ret <- (object[,1L] > 3)
+  ret <- (object[,1L] > over)
   ret[object[,1L] < over & object[,2L] == 0] <- NA # censored before `over`
   return(ret)
 }

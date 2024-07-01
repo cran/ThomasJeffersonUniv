@@ -30,6 +30,8 @@ Function \link{subset_} returns a \link[base]{data.frame}, with additional \link
 \describe{
 \item{\code{attr(,'vline')}}{\link[base]{integer} scalar,
 position of a vertical line (see \code{?flextable::vline})}
+\item{\verb{attr(,'jhighlight)'}}{\link[base]{character} \link[base]{vector},
+names of columns to be \code{flextable::highlight}ed.}
 }
 }
 \description{

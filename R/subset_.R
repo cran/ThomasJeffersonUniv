@@ -37,7 +37,10 @@
 #' \describe{
 #' \item{`attr(,'vline')`}{\link[base]{integer} scalar,
 #' position of a vertical line (see `?flextable::vline`)}
+#' \item{`attr(,'jhighlight)'`}{\link[base]{character} \link[base]{vector},
+#' names of columns to be `flextable::highlight`ed.}
 #' }
+#' 
 #' 
 #' @examples 
 #' subset_(trees, Girth > 9 & Height < 70)
@@ -67,18 +70,18 @@ subset_ <- function(
     if (!missing(avoid_pattern)) grep(avoid_pattern, x = nm, value = TRUE)
   )
   
-  subset_select <- unique.default(c(intersect(all.vars(.subset), nm), select))
+  var_subset <- intersect(all.vars(.subset), nm)
   
   var_sel <- if (!length(avoid)) {
-    subset_select
+    c(var_subset, select)
   } else if (!length(select)) {
     # `avoid`, but no `select`
-    setdiff(nm, avoid)
+    c(var_subset, setdiff(nm, avoid))
   } else {
     # `avoid`, `select`
-    setdiff(x = subset_select, y = avoid)
+    setdiff(x = c(var_subset, select), y = avoid)
   }
-  var_sel <- nm[sort.int(match(var_sel, table = nm))] # in original order
+  var_sel <- nm[sort.int(match(unique.default(var_sel), table = nm))] # in original order
   
   rid <- which(eval(expr = .subset, envir = x)) # removes NA
   if (!length(rid)) {
@@ -91,5 +94,6 @@ subset_ <- function(
     x[rid, var_sel, drop = FALSE],
     check.names = FALSE)
   attr(ret, which = 'vline') <- 1L
+  attr(ret, which = 'jhighlight') <- var_subset
   return(ret)
 }

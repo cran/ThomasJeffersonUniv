@@ -60,7 +60,7 @@ splitDF <- function(x) {
 #' Only case-insensitive \link[base]{grep} methods are available.
 #' 
 #' @examples
-#' DF = swiss[sample(nrow(swiss), size = 100, replace = TRUE), ]
+#' DF = swiss[sample(nrow(swiss), size = 55, replace = TRUE), ]
 #' matchDF(DF)
 #' @importFrom stringdist stringdist
 #' @importFrom utils write.csv
@@ -100,7 +100,14 @@ matchDF <- function(
   
   id <- match(x = splitDF(x0), table = splitDF(tab0), nomatch = NA_integer_)
   
-  if (any(na1 <- is.na(id))) {
+  if (any(duplicated.default(id))) { # rows with multiple matches
+    tmp1 <- split.default(seq_along(id), f = factor(id))
+    tmp2 <- tmp1[lengths(tmp1, use.names = FALSE) > 1L]
+    tmp <- lapply(tmp2, FUN = `+`, 1L) # Excel rows, +1 for row header
+    if (trace) lapply(format_named(tmp, sep = 'th unique row appears on Excel rows '), FUN = message)
+  } # rows with multiple matches
+  
+  if (any(na1 <- is.na(id))) { # rows without a match
     
     x_ <- x0[na1, , drop = FALSE]
     x_uid <- !duplicated.data.frame(x_)
@@ -140,7 +147,7 @@ matchDF <- function(
     )
     fuzzy_csv <- tempfile(pattern = 'fuzzy_', fileext = '.csv')
     message(sprintf(
-      fmt = '\u261e %s for %d (%d unique) %s having no exact match to %s\n', # extra line feed!!
+      fmt = '\u261e %s %d (%d unique) %s having no exact match to %s\n', # extra line feed!!
       style_basename(fuzzy_csv),
       sum(na1), sum(x_uid), 
       style_interaction(by.x), style_interaction(by.tab)))
@@ -153,7 +160,7 @@ matchDF <- function(
       # think what to do next
     }
     
-  }
+  } # rows without a match
   
   attr(id, which = 'by.x') <- by.x
   attr(id, which = 'by.table') <- by.tab

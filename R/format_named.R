@@ -15,15 +15,15 @@
 #' Function [format_named] returns a \link[base]{character} \link[base]{vector}.
 #' 
 #' @examples
-#' x1 = c(a = 1, bc = '2\n3')
+#' x1 = c(a = 'a1', bc = '2\n3')
 #' cat(format_named(x1), sep = '\n')
+#' noout = lapply(format_named(x1), FUN = message)
 #' 
 #' x2 = list(a = '1\n2', b = character(), cd = '3\n4', efg = '5\n6\n7')
-#' cat(format_named(x2, colored = FALSE), sep = '\n')
-#' cat(format_named(x2), sep = '\n')
+#' noout = lapply(format_named(x2, colored = FALSE), FUN = message)
 #' 
 #' x3 = c(a = '1\n2')
-#' cat(format_named(x3), sep = '\n')
+#' noout = lapply(format_named(x3), FUN = message)
 #' 
 #' @keywords internal
 #' @export
@@ -46,20 +46,26 @@ format_named <- function(x, sep = ': ', colored = TRUE) {
     colour_times <- c(c_nx[1L], diff(c_nx))
   } 
   
-  ret <- paste(format.default(nm, justify = 'right'), x1, sep = sep)
-  if (!colored) return(ret)
+  x_nm <- format.default(nm, justify = 'right')
   
-  colour_head <- if (length(colour_times) == 1L) {
-    rep('\033[32m', times = colour_times)
-  } else suppressWarnings(mapply(rep, c('\033[32m', '\033[36m'), times = colour_times))
+  if (!colored) return(paste(x_nm, x1, sep = sep))
+  
+  ANSI_head <- if (length(colour_times) == 1L) {
+    #rep('\033[1;4;32m', times = colour_times) # bold, underline
+    rep('\033[1;32m', times = colour_times) # bold
+  #} else suppressWarnings(mapply(rep, c('\033[1;4;32m', '\033[1;4;36m'), times = colour_times))
+  } else suppressWarnings(mapply(rep, c('\033[1;32m', '\033[1;36m'), times = colour_times))
   # base::suppressWarnings on length not integer times haha
-  
   return(paste0(
-    unlist(colour_head, use.names = FALSE),
-    ret,
-    rep('\033[0m', times = length(ret))
+    unlist(ANSI_head, use.names = FALSE),
+    x_nm, 
+    # '\033[24m', # underline off
+    sep, 
+    '\033[22m', # bold off
+    x1, '\033[0m'
   ))
   
 }
 
+# https://gist.github.com/upsilun/4a85ab3bc7cf92e8acde720c6eb7ddea
 

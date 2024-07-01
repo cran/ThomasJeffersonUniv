@@ -23,7 +23,8 @@ Function \link{phone10} converts all US and Canada (+1) phone numbers to 10-digi
 \examples{
 x = c(
  '+1(800)275-2273', # Apple
- '1-888-280-4331' # Amazon
+ '1-888-280-4331', # Amazon
+ '000-000-0000'
 )
 phone10(x)
 phone10(x, sep = '-')

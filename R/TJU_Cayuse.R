@@ -194,7 +194,7 @@ view_by_row <- function(data) {
   nr <- .row_names_info(data, type = 2L)
   .mapply(FUN = function(x, nm) {
     message('Row ', sQuote(nm))
-    cat(format_named(x), sep = '\n')
+    lapply(format_named(x), FUN = message)
     cat('\n')
   }, dots = list(
     x = split.data.frame(data, f = seq_len(nr)), 

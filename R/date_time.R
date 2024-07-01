@@ -1,7 +1,5 @@
 
 
-
-
 #' @title Concatenate Date and Time
 #' 
 #' @description 
@@ -106,7 +104,7 @@ date_difftime_ <- function(date_, difftime_, tz = 'UTC', tol = sqrt(.Machine$dou
 
 
 
-
+#as.difftime.
 
 
 
